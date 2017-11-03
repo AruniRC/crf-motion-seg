@@ -1,23 +1,5 @@
 #!/home/arunirc/dense-crf/bin/python
 
-import pydensecrf.densecrf as dcrf
-from pydensecrf.utils import unary_from_labels, create_pairwise_bilateral, create_pairwise_gaussian, unary_from_softmax
-
-import numpy as np
-import matplotlib.pyplot as plt
-import sys
-import scipy.io as sio
-from skimage import color
-from skimage.io import imread, imsave
-import os
-from os import listdir, makedirs
-from os.path import isfile, join, isdir
-import argparse
-
-import traceback
-import warnings
-import sys
-
 
 '''
     Dense CRF Motion Segmentation refinement
@@ -35,6 +17,24 @@ SEG_DATA = '/data/pbideau/motionSegmentation/Aruni_CRF/complex-background-multi-
 IMAGE_EXT = ['.jpg', '.png']
 OUT_DIR = 'data/crf-output/complex-bg'
 
+
+import pydensecrf.densecrf as dcrf
+from pydensecrf.utils import unary_from_labels, create_pairwise_bilateral, create_pairwise_gaussian, unary_from_softmax
+
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+import scipy.io as sio
+from skimage import color
+from skimage.io import imread, imsave
+import os
+from os import listdir, makedirs
+from os.path import isfile, join, isdir
+import argparse
+
+import traceback
+import warnings
+import sys
 
 
 def parse_input_opts():
@@ -105,6 +105,7 @@ def apply_crf_seg(opts):
             continue
         print d
 
+
         # Dataset specific hackery
         if opts.dataset == 'davis':
             seg_dir = join(opts.seg_data, d, 'GroundTruth/objectProb/')
@@ -118,6 +119,7 @@ def apply_crf_seg(opts):
 
         elif opts.dataset == 'fbms':
             seg_dir = join(opts.seg_data, d, 'objectProb/')
+
 
         # Corner case: some videos in original dataset may be skipped when 
         #   evaluating the segmentations. We skip these too. 
