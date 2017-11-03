@@ -89,6 +89,28 @@ def preprocess_label_scores(res):
     return labels, label_map, n_labels
 
 
+def get_crf_seg(img, labels, n_labels):
+    '''
+        crf_out_final = get_crf_seg(img, labels, n_labels)
+    '''
+    crf = dcrf.DenseCRF(img.shape[1] * img.shape[0], n_labels)
+    U = unary_from_softmax(labels)
+    crf.setUnaryEnergy(U)
+    feats = create_pairwise_gaussian(sdims=(3, 3), shape=img.shape[:2])
+    crf.addPairwiseEnergy(feats, compat=3,
+                    kernel=dcrf.DIAG_KERNEL,
+                    normalization=dcrf.NORMALIZE_SYMMETRIC)
+    feats = create_pairwise_bilateral(sdims=(50, 50), schan=(10, 10, 10),
+                                  img=img, chdim=2)
+    crf.addPairwiseEnergy(feats, compat=5,
+                    kernel=dcrf.DIAG_KERNEL,
+                    normalization=dcrf.NORMALIZE_SYMMETRIC)
+    Q = crf.inference(5)
+
+    return Q
+
+
+
 
 def apply_crf_seg(opts):
 
@@ -156,7 +178,6 @@ def apply_crf_seg(opts):
                 
                 # Read Motion Segmentation result (MAT file)
                 #   -- assuming that you consistently zero-pad your output seg files
-                # from IPython.core.debugger import Tracer; Tracer()()
                 seg_file = join(seg_dir, frame_num.zfill(5) + '.mat')
                 
                 if not isfile(seg_file):
@@ -183,27 +204,14 @@ def apply_crf_seg(opts):
                 labels, label_map, n_labels = preprocess_label_scores(res)
                 
                 # Dense CRF inference
-                crf = dcrf.DenseCRF(img.shape[1] * img.shape[0], n_labels)
-                U = unary_from_softmax(labels)
-                crf.setUnaryEnergy(U)
-                feats = create_pairwise_gaussian(sdims=(3, 3), shape=img.shape[:2])
-                crf.addPairwiseEnergy(feats, compat=3,
-                                kernel=dcrf.DIAG_KERNEL,
-                                normalization=dcrf.NORMALIZE_SYMMETRIC)
-                feats = create_pairwise_bilateral(sdims=(50, 50), schan=(10, 10, 10),
-                                              img=img, chdim=2)
-                crf.addPairwiseEnergy(feats, compat=5,
-                                kernel=dcrf.DIAG_KERNEL,
-                                normalization=dcrf.NORMALIZE_SYMMETRIC)
-                Q = crf.inference(5)
+                Q = get_crf_seg(img, labels, n_labels)
                 
-
-                # CRF scores into Pia's format
-                probQ = np.array(Q)
+                probQ = np.array(Q) # CRF scores into Pia's format
                 crf_prob = probQ.reshape((probQ.shape[0], img.shape[0] ,img.shape[1]))
                 crf_prob = crf_prob.transpose((1,2,0))
                 crf_out_final = np.zeros(res.shape)
                 crf_out_final[:,:,label_map] = crf_prob
+
                 
                 # save as matlab MATLAB-style .mat file
                 sio.savemat(join(opts.out_dir, d, frame_num.zfill(5) + '.mat'), \
@@ -222,7 +230,8 @@ def apply_crf_seg(opts):
                     tiled_img = np.concatenate((res_rgb, \
                                     np.zeros([res_rgb.shape[0],10,3]), \
                                     crf_rgb), axis=1)
-                    imsave(join(opts.out_dir, d, 'viz', frame_num+'_raw_crf.png'), tiled_img)                
+                    imsave(join(opts.out_dir, d, 'viz', frame_num+'_raw_crf.png'), \
+                                    tiled_img)                
 
 
 # entry point
