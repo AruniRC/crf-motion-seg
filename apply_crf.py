@@ -231,9 +231,11 @@ def apply_crf_seg(opts):
 
                 # check `res` dims
                 if res.ndim != 3:
+                    # only background class -- skip!
+                    continue
                     # only background class predicted in raw segmentation: 
                     #   -- stack `(1-res)` onto 3rd axis
-                    res = np.stack((res,1-res), axis=2)  
+                    # res = np.stack((res,1-res), axis=2)  
                 
                 
                 
