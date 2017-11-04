@@ -45,12 +45,32 @@ def parse_input_opts():
                             default=SEG_DATA)
     parser.add_argument('-o', '--out_dir', help='Specify output folder for CRF segmentaitons', \
                             default=OUT_DIR)
-    parser.add_argument('-d', '--dataset', help='Specify dataset: davis, camo, complex', \
+    parser.add_argument('-d', '--dataset', help='Specify dataset: davis, camo, complex, fbms', \
                             default='davis')
     parser.add_argument('-v', '--viz', help='Save visualized original and CRF segmentations as images', \
                             default=False, action='store_true')
+    parser.add_argument('-cgw', '--crf_gaussian_weight', help='CRF weight for pairwise Gaussian term', \
+                            default=3)
+    parser.add_argument('-cgx', '--gaussian_sx', help='x_stdev for pairwise Gaussian term', \
+                            default=3)
+    parser.add_argument('-cbw', '--crf_bilateral_weight', help='CRF weight for pairwise bilateral term', \
+                            default=5)
+    parser.add_argument('-cbx', '--bilateral_sx', help='x_stdev for pairwise bilateral term', \
+                            default=50)
+    parser.add_argument('-cbc', '--bilateral_color', help='color stdev for pairwise bilateral term', \
+                            default=10)
+    parser.add_argument('-mi', '--max_iter', help='Max iters for CRF', \
+                            default=5)
+
     opts = parser.parse_args()
     opts.image_exts = IMAGE_EXT
+    
+    opts.crf_gaussian_weight = int(opts.crf_gaussian_weight)
+    opts.crf_gaussian_weight = int(opts.crf_gaussian_weight)
+
+    opts.crf_bilateral_weight = int(opts.crf_bilateral_weight)
+    opts.bilateral_sx = int(opts.bilateral_sx)
+    opts.bilateral_color = int(opts.bilateral_color)
     return opts
 
 
@@ -89,20 +109,21 @@ def preprocess_label_scores(res):
     return labels, label_map, n_labels
 
 
-def get_crf_seg(img, labels, n_labels):
+def get_crf_seg(img, labels, n_labels, opts):
     '''
         crf_out_final = get_crf_seg(img, labels, n_labels)
     '''
     crf = dcrf.DenseCRF(img.shape[1] * img.shape[0], n_labels)
     U = unary_from_softmax(labels)
     crf.setUnaryEnergy(U)
-    feats = create_pairwise_gaussian(sdims=(3, 3), shape=img.shape[:2])
-    crf.addPairwiseEnergy(feats, compat=3,
+    feats = create_pairwise_gaussian(sdims=(opts.gaussian_sx, opts.gaussian_sx), shape=img.shape[:2])
+    crf.addPairwiseEnergy(feats, compat=opts.crf_gaussian_weight,
                     kernel=dcrf.DIAG_KERNEL,
                     normalization=dcrf.NORMALIZE_SYMMETRIC)
-    feats = create_pairwise_bilateral(sdims=(50, 50), schan=(10, 10, 10),
-                                  img=img, chdim=2)
-    crf.addPairwiseEnergy(feats, compat=5,
+    feats = create_pairwise_bilateral(sdims=(opts.bilateral_sx, opts.bilateral_sx), \
+                                      schan=(opts.bilateral_color, opts.bilateral_color, opts.bilateral_color),
+                                      img=img, chdim=2)
+    crf.addPairwiseEnergy(feats, compat=opts.crf_bilateral_weight,
                     kernel=dcrf.DIAG_KERNEL,
                     normalization=dcrf.NORMALIZE_SYMMETRIC)
     Q = crf.inference(5)
@@ -111,10 +132,9 @@ def get_crf_seg(img, labels, n_labels):
 
 
 
-
+# ------------------------------------------------------------------------------
 def apply_crf_seg(opts):
-
-    
+# ------------------------------------------------------------------------------
 
     for d in sorted(listdir(opts.image_data)):
 
@@ -128,7 +148,9 @@ def apply_crf_seg(opts):
         print d
 
 
+        # ----------------------------------------------------------------------
         # Dataset specific hackery
+        # ----------------------------------------------------------------------
         if opts.dataset == 'davis':
             seg_dir = join(opts.seg_data, d, 'GroundTruth/objectProb/')
 
@@ -141,10 +163,13 @@ def apply_crf_seg(opts):
 
         elif opts.dataset == 'fbms':
             seg_dir = join(opts.seg_data, d, 'objectProb/')
+        
 
 
+        # ----------------------------------------------------------------------
         # Corner case: some videos in original dataset may be skipped when 
-        #   evaluating the segmentations. We skip these too. 
+        #   evaluating the segmentations. We skip these too.
+        # ---------------------------------------------------------------------- 
         if not isdir(seg_dir):
             continue
         
@@ -160,10 +185,16 @@ def apply_crf_seg(opts):
         if d=='tennis':
             TENNIS_FLAG = True
         
+        
+
         count = 0
         for frame in sorted(listdir(vid_dir)):
-            # from IPython.core.debugger import Tracer; Tracer()()
+            
             if frame.endswith(tuple(opts.image_exts)):
+
+                # --------------------------------------------------------------
+                #   Initial checks
+                # --------------------------------------------------------------
                 count = count + 1
 
                 if MARPLE_FLAG or TENNIS_FLAG:
@@ -175,10 +206,21 @@ def apply_crf_seg(opts):
                 # check if output is already computed -- skip
                 if isfile(join(opts.out_dir, d, frame_num.zfill(5) + '.mat')):
                     continue
+
+                # if no corresponding ground truth image -- skip
+                f_num = int(frame_num)
+                gt_file = join(opts.image_data, d, 'GroundTruth', str(f_num).zfill(3)+'_gt.png')
+                if not isfile(gt_file):
+                    continue
                 
+
+
+                # --------------------------------------------------------------
                 # Read Motion Segmentation result (MAT file)
                 #   -- assuming that you consistently zero-pad your output seg files
+                # --------------------------------------------------------------
                 seg_file = join(seg_dir, frame_num.zfill(5) + '.mat')
+                print seg_file
                 
                 if not isfile(seg_file):
                     if count>1:
@@ -189,30 +231,41 @@ def apply_crf_seg(opts):
 
                 # check `res` dims
                 if res.ndim != 3:
-                    # only background class predicted: save as-is w/o CRF
-                    sio.savemat(join(opts.out_dir, d, frame_num.zfill(5) + '.mat'), \
-                            dict(objectProb=res))
-                    continue 
+                    # only background class predicted in raw segmentation: 
+                    #   -- stack `(1-res)` onto 3rd axis
+                    res = np.stack((res,1-res), axis=2)  
                 
-                # read RGB image
+                
+                
+                # --------------------------------------------------------------
+                # Read RGB image
+                # --------------------------------------------------------------
                 img = imread(join(vid_dir, frame))
+                
 
                 # DEBUG
                 # from IPython.core.debugger import Tracer; Tracer()()
 
+
+                # --------------------------------------------------------------
+                # Dense CRF inference
+                # --------------------------------------------------------------
                 # input probabilities (unary terms)
                 labels, label_map, n_labels = preprocess_label_scores(res)
                 
-                # Dense CRF inference
-                Q = get_crf_seg(img, labels, n_labels)
+                Q = get_crf_seg(img, labels, n_labels, opts)
                 
                 probQ = np.array(Q) # CRF scores into Pia's format
                 crf_prob = probQ.reshape((probQ.shape[0], img.shape[0] ,img.shape[1]))
                 crf_prob = crf_prob.transpose((1,2,0))
                 crf_out_final = np.zeros(res.shape)
                 crf_out_final[:,:,label_map] = crf_prob
+                
 
                 
+                # --------------------------------------------------------------
+                # Outputs and visualization
+                # --------------------------------------------------------------
                 # save as matlab MATLAB-style .mat file
                 sio.savemat(join(opts.out_dir, d, frame_num.zfill(5) + '.mat'), \
                             dict(objectProb=crf_out_final))
@@ -236,7 +289,6 @@ def apply_crf_seg(opts):
 
 # entry point
 if __name__ == '__main__':
-
     opts = parse_input_opts()
     apply_crf_seg(opts)
     
