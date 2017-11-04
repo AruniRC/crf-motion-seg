@@ -3,20 +3,31 @@
 '''
     Dense CRF Motion Segmentation for SINGLE FRAME
     -----------------------------------------------
-    - Specify data locations and settings below. 
-    - Alternatively, you can call this script from the cmd line and pass the args:
-        > python apply_crf.py -i IMAGE_DATASET -o SEG_DATASET -o data/crf-output
-    - Optional: modify path to Python interpreter in the first line of this script.
+    - Specify data locations and settings below.
 
     - Usage:
         python apply_crf_image.py -i INPUT_IMAGE_FILE -s INPUT_SEG_MAT_FILE -o OUTPUT_MAT_FILE
+
+    - Requirements:
+        * install Anaconda
+        * Create a conda environment:
+            conda create --prefix ~/dense-crf-debug python=2.7
+        * Enter that environment:
+            source activate ~/dense-crf-debug
+        * Install a bunch of things:
+            pip install pydensecrf
+            conda install numpy
+            conda install scipy
+            conda install scikit-image
+        * Run MATLAB and call this script from inside the conda env.
+
 '''
 
 from __future__ import division
 
 IMAGE_PATH = './samples/bear01/bear01_0002.jpg'
 SEG_PATH = './samples/bear01/00002.mat'
-OUT_PATH = './samples/bear01/crf_seg.mat'
+OUT_PATH = './samples/bear01/crf_d1_00002.mat'
 
 
 import pydensecrf.densecrf as dcrf
@@ -124,14 +135,14 @@ def apply_crf_seg_img(opts):
     img = imread(opts.image)
 
 
-
-    # Input probabilities (unary terms)
+    # Create unary terms
     labels, label_map, n_labels = preprocess_label_scores(res)
     
 
     # Dense CRF inference
     Q = get_crf_seg(img, labels, n_labels, opts)
     
+
     # CRF scores into Pia's format
     probQ = np.array(Q) 
     crf_prob = probQ.reshape((probQ.shape[0], img.shape[0] ,img.shape[1]))
@@ -144,7 +155,7 @@ def apply_crf_seg_img(opts):
     sio.savemat(opts.out, dict(objectProb=crf_out_final))
     
 
-    # Optional: save labelings as images
+    # Optional: save labelings as image
     if opts.viz:
         # CRF MAP labels
         MAP = np.argmax(Q, axis=0) 
