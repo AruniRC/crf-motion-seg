@@ -93,14 +93,16 @@ def get_crf_seg(img, labels, n_labels, opts):
     crf = dcrf.DenseCRF(img.shape[1] * img.shape[0], n_labels)
     U = unary_from_softmax(labels)
     crf.setUnaryEnergy(U)
+
     feats = create_pairwise_gaussian(sdims=(3, 3), shape=img.shape[:2])
-    crf.addPairwiseEnergy(feats, compat=3,
+    crf.addPairwiseEnergy(feats, compat=5,
                     kernel=dcrf.DIAG_KERNEL,
                     normalization=dcrf.NORMALIZE_SYMMETRIC)
+    
     feats = create_pairwise_bilateral(sdims=(50, 50), \
                                       schan=(10, 10, 10),
                                       img=img, chdim=2)
-    crf.addPairwiseEnergy(feats, compat=5,
+    crf.addPairwiseEnergy(feats, compat=10,
                     kernel=dcrf.DIAG_KERNEL,
                     normalization=dcrf.NORMALIZE_SYMMETRIC)
     Q = crf.inference(5)
@@ -123,9 +125,8 @@ def apply_crf_seg_img(opts):
 
     # check `res` dims
     if res.ndim != 3:
-        # only background class predicted in raw segmentation: 
-        #   -- stack `(1-res)` onto 3rd axis
-        res = np.stack((res,1-res), axis=2) 
+        # only background class -- skip!
+        continue
     
 
     # Read RGB image
