@@ -58,6 +58,19 @@ def parse_input_opts():
     parser.add_argument('-v', '--viz', help='Save visualized original and CRF segmentations as images', \
                             default=False, action='store_true')
 
+    parser.add_argument('-cgw', '--crf_gaussian_weight', help='CRF weight for pairwise Gaussian term', \
+                            default=3)
+    parser.add_argument('-cgx', '--gaussian_sx', help='x_stdev for pairwise Gaussian term', \
+                            default=3)
+    parser.add_argument('-cbw', '--crf_bilateral_weight', help='CRF weight for pairwise bilateral term', \
+                            default=5)
+    parser.add_argument('-cbx', '--bilateral_sx', help='x_stdev for pairwise bilateral term', \
+                            default=50)
+    parser.add_argument('-cbc', '--bilateral_color', help='color stdev for pairwise bilateral term', \
+                            default=10)
+    parser.add_argument('-mi', '--max_iter', help='Max iters for CRF', \
+                            default=5)
+
     opts = parser.parse_args()
     return opts
 
@@ -94,17 +107,18 @@ def get_crf_seg(img, labels, n_labels, opts):
     U = unary_from_softmax(labels)
     crf.setUnaryEnergy(U)
 
-    feats = create_pairwise_gaussian(sdims=(3, 3), shape=img.shape[:2])
-    crf.addPairwiseEnergy(feats, compat=5,
+    feats = create_pairwise_gaussian(sdims=(opts.gaussian_sx, opts.gaussian_sx), shape=img.shape[:2])
+    crf.addPairwiseEnergy(feats, compat=opts.crf_gaussian_weight,
                     kernel=dcrf.DIAG_KERNEL,
                     normalization=dcrf.NORMALIZE_SYMMETRIC)
-    
-    feats = create_pairwise_bilateral(sdims=(50, 50), \
-                                      schan=(10, 10, 10),
+
+    feats = create_pairwise_bilateral(sdims=(opts.bilateral_sx, opts.bilateral_sx), \
+                                      schan=(opts.bilateral_color, opts.bilateral_color, opts.bilateral_color),
                                       img=img, chdim=2)
-    crf.addPairwiseEnergy(feats, compat=10,
+    crf.addPairwiseEnergy(feats, compat=opts.crf_bilateral_weight,
                     kernel=dcrf.DIAG_KERNEL,
                     normalization=dcrf.NORMALIZE_SYMMETRIC)
+
     Q = crf.inference(5)
 
     return Q
@@ -125,9 +139,7 @@ def apply_crf_seg_img(opts):
 
     # check `res` dims
     if res.ndim != 3:
-        # only background class -- skip!
-        continue
-    
+        return
 
     # Read RGB image
     if not isfile(opts.image):
