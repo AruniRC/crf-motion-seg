@@ -139,6 +139,8 @@ def apply_crf_seg_img(opts):
 
     # check `res` dims
     if res.ndim != 3:
+        # if no foreground object, then save the original and exit
+        sio.savemat(opts.out, dict(objectProb=res))
         return
 
     # Read RGB image
