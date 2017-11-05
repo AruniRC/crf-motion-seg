@@ -31,23 +31,23 @@ IMAGE_DATA = '/data/arunirc/Research/dense-crf-data/training_subset/'
 SEG_DATA = '/data2/arunirc/Research/dense-crf/data/our/FBMS/Trainingset/'
 OUT_DIR = '/data2/arunirc/Research/dense-crf/data/cross-val-crf/'
 MODE = 'pick'   # 'run' or 'eval' or 'pick'
-METRIC = 'iou'  # 'iou' or 'pr'
+METRIC = 'pr'  # 'iou' or 'pr'
 
 
 
 # Run 1
 # bilateral (colorspace)
-RUN_NUM = 1
-range_W=[3, 5, 10]
-range_XY_STD=[40, 50, 60, 70, 80, 90, 100]
-range_RGB_STD=[3, 5, 7, 9, 10]
+# RUN_NUM = 1
+# range_W=[3, 5, 10]
+# range_XY_STD=[40, 50, 60, 70, 80, 90, 100]
+# range_RGB_STD=[3, 5, 7, 9, 10]
 
-# # Run 2
-# # bilateral (colorspace)
-# RUN_NUM = 2
-# range_W=[10, 15, 20]
-# range_XY_STD=[10, 20, 30, 40]
-# range_RGB_STD=[1, 2, 3, 4, 5, 6]
+# Run 2
+# bilateral (colorspace)
+RUN_NUM = 2
+range_W = [10, 15, 20]
+range_XY_STD = [10, 20, 30, 40]
+range_RGB_STD = [1, 2, 3, 4, 5, 6]
 
 # range_W=[5]
 # range_XY_STD=[40]
@@ -57,13 +57,16 @@ range_RGB_STD=[3, 5, 7, 9, 10]
 POS_W = 3
 POS_X_STD = 3
 
-MAX_ITER=5
+MAX_ITER = 5
 
 
 
 
 
 def grid_runner():
+    '''
+        Run CRF segmentations using a grid-search over CRF settings
+    '''
 
     if not os.path.isdir(OUT_DIR):
             os.makedirs(OUT_DIR)
@@ -75,10 +78,13 @@ def grid_runner():
             for r in range_RGB_STD:
                 Bi_R_STD = r
 
+
+
                 out_dir_name = join( OUT_DIR, 'w-'+str(w) + '_x-'+str(x) + '_r-'+str(r) )
 
-                # if already computed in a prior run -- skip
-                if os.path.isdir(OUT_DIR):
+                # # if already computed in a prior run -- skip
+                if os.path.isdir(out_dir_name):
+                    print 'Skipping %s. Already exists.' % out_dir_name
                     continue
 
                 cmd = 'python apply_crf.py ' \
@@ -99,6 +105,9 @@ def grid_runner():
 
 
 def grid_evaluater():
+    '''
+        
+    '''
 
     print 'Running evaluations'
 
@@ -127,6 +136,7 @@ def grid_evaluater():
                 subprocess.call(cmd, shell=True)
 
     print 'Done'
+
 
 
 def grid_picker():
@@ -159,10 +169,12 @@ def grid_picker():
                 # select the evaluation metric
                 if METRIC == 'iou':
                     iou_crf = np.loadtxt( join(out_dir_name,'result_iou_fg_crf.txt'), delimiter=',' )
-                    print '%d  %d  %d ' % (w, x, r)
+                    # print '%d  %d  %d ' % (w, x, r)
                     val = np.mean(iou_crf)
-                    print val
-
+                    # print val
+                elif METRIC == 'pr':
+                    prf_crf = np.loadtxt( join(out_dir_name,'result_pr_fg_crf.txt'), delimiter=',' )
+                    val = prf_crf[2]
 
                 if val > best_val:
                     best_val = val
@@ -174,6 +186,12 @@ def grid_picker():
         print 'Best IOU: %f' % best_val
         print 'Settings: w=%f, x=%f, r=%f' % (best_w, best_x, best_r)
         np.savetxt(join(OUT_DIR,'crf_best_iou_' + str(RUN_NUM) +'.txt'), \
+                   [best_val, best_w, best_x, best_r], delimiter=',')
+
+    elif METRIC == 'pr':
+        print 'Best f-measure: %f' % best_val
+        print 'Settings: w=%f, x=%f, r=%f' % (best_w, best_x, best_r)
+        np.savetxt(join(OUT_DIR,'crf_best_pr_' + str(RUN_NUM) +'.txt'), \
                    [best_val, best_w, best_x, best_r], delimiter=',')
 
 

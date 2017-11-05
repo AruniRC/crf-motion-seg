@@ -196,10 +196,9 @@ def eval_seg(GT_DATA, CRF_SEG_DATA, RAW_SEG_DATA, OUT_DIR):
     prec, rec, f_m =  pr_from_hist(hist_crf)
     np.savetxt(join(OUT_DIR,'result_pr_fg_crf.txt'), [prec, rec, f_m], delimiter=',')
 
-
-    print 'raw'
+    print 'IOU raw'
     print iu_raw
-    print 'CRF'
+    print 'IOU CRF'
     print iu_crf
 
     np.savetxt(join(OUT_DIR,'result_iou_fg_raw.txt'), iu_raw, delimiter=',')
