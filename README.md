@@ -10,7 +10,7 @@ Inside the env:
     pip install pydensecrf
     pip install -U setuptools
     pip install -U cython
-    pip install numpy matplotlib scipy skimage ipython jupyter
+    pip install numpy matplotlib scipy scikit-image ipython jupyter
 
 
 ### Apply CRF
@@ -31,14 +31,14 @@ To setup on **swarm2**:
 
 1) install _miniconda_ (from your home directory on swarm2):
 
-    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
-    bash Miniconda2-latest-Linux-x86_64.sh
+    `wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+    bash Miniconda2-latest-Linux-x86_64.sh`
 
 2) setup the conda environment:
 
     conda create --prefix ~/dense-crf-conda python=2.7
     source activate /home/arunirc/dense-crf-conda
-    pip install pydensecrf     
+    pip install pydensecrf
 
 The last bit takes a long time ... without any output messages!
 

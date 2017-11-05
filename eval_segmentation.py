@@ -32,6 +32,7 @@ CRF_SEG_DATA = '/data/arunirc/Research/dense-crf-data/FBMS-train-subset-01/'
 RAW_SEG_DATA = '/data2/arunirc/Research/dense-crf/data/our/FBMS/Trainingset/'
 OUT_DIR = '/data/arunirc/Research/dense-crf-data/eval-FBMS-train-subset-01'
 
+
 def parse_input_opts():
     parser = argparse.ArgumentParser(description='Evaluate CRF segmentations')
     parser.add_argument('-g', '--gt_data', help='Ground truth data', \
@@ -61,16 +62,23 @@ def image_to_label(gt_img):
         gt_label[idx[0], idx[1]] = i
     return gt_label
 
+
 def label_to_image(im):
     # rescale pixel values
     low, high = np.min(im), np.max(im)
     im1 = 255.0 * (im - low) / (high - low)
     return im1.astype('uint8')
 
+
 def fast_hist(a, b, n):
+    '''
+        Computes a histogram over bins for an image segmentation.a
+        Similar to the confusion matrix (for tfg-bg only)
+    '''
     k = (a >= 0) & (a < n)
     return np.bincount(n * a[k].astype(int) + b[k], \
                        minlength=n**2).reshape(n, n)
+
 
 def get_iou(gt_label, res_label):    
     seg_hist = fast_hist(gt_label.flatten(), res_label.flatten(), \
@@ -78,6 +86,24 @@ def get_iou(gt_label, res_label):
     # per-class IU
     iu = 1.0 * np.diag(seg_hist) / (seg_hist.sum(1) + seg_hist.sum(0) - np.diag(seg_hist))
     return iu
+
+
+def iou_from_hist(hist):
+    '''
+        Return Intersection-over-Union (IoU) metric given a histogram (confusion matrix)
+    '''
+    return np.diag(hist) / (hist.sum(1) + hist.sum(0) - np.diag(hist))
+
+
+def pr_from_hist(hist):
+    '''
+        Return precision, recall and f-measure given confusion matrix (hist)
+    '''
+    prec = hist[1,1] / (hist[1,1] + hist[0,1])
+    rec = hist[1,1] / (hist[1,1] + hist[1,0])
+    f_m = 2 * (prec*rec) / (prec + rec)
+    return prec, rec, f_m
+
 
 
 
@@ -138,6 +164,7 @@ def eval_seg(GT_DATA, CRF_SEG_DATA, RAW_SEG_DATA, OUT_DIR):
             raw_res_label = raw_res_label.astype(int)
             crf_res_label = crf_res_label.astype(int)
             
+            # label as 0 for background and 1 for (any) foreground class
             gt_label_binary = gt_label
             gt_label_binary[np.where(gt_label>0)] = 1
             raw_label_binary = raw_res_label
@@ -164,6 +191,11 @@ def eval_seg(GT_DATA, CRF_SEG_DATA, RAW_SEG_DATA, OUT_DIR):
     # save over-all results
     iu_raw = np.diag(hist_raw) / (hist_raw.sum(1) + hist_raw.sum(0) - np.diag(hist_raw))
     iu_crf = np.diag(hist_crf) / (hist_crf.sum(1) + hist_crf.sum(0) - np.diag(hist_crf))
+
+    # over-all precision-recall results
+    prec, rec, f_m =  pr_from_hist(hist_crf)
+    np.savetxt(join(OUT_DIR,'result_pr_fg_crf.txt'), [prec, rec, f_m], delimiter=',')
+
 
     print 'raw'
     print iu_raw
