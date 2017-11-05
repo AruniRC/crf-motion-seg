@@ -28,12 +28,24 @@ import sys
 
 
 GT_DATA = '/data/arunirc/Research/dense-crf-data/training_subset/'
-CRF_SEG_DATA = '/data/arunirc/Research/dense-crf-data/FBMS-train-subset-00/'
+CRF_SEG_DATA = '/data/arunirc/Research/dense-crf-data/FBMS-train-subset-01/'
 RAW_SEG_DATA = '/data2/arunirc/Research/dense-crf/data/our/FBMS/Trainingset/'
-OUT_DIR = '/data/arunirc/Research/dense-crf-data/eval-baseline-00'
+OUT_DIR = '/data/arunirc/Research/dense-crf-data/eval-FBMS-train-subset-01'
 
-
-
+def parse_input_opts():
+    parser = argparse.ArgumentParser(description='Evaluate CRF segmentations')
+    parser.add_argument('-g', '--gt_data', help='Ground truth data', \
+                            default=GT_DATA)
+    parser.add_argument('-c', '--crf_data', help='CRF segmentations', \
+                            default=CRF_SEG_DATA)
+    parser.add_argument('-r', '--raw_data', help='Raw segmentaitons', \
+                            default=RAW_SEG_DATA)
+    parser.add_argument('-o', '--out_dir', help='Specify output directory', \
+                            default=OUT_DIR)
+    parser.add_argument('-v', '--viz', help='Save visualized original and CRF segmentations as images', \
+                            default=False, action='store_true')
+    opts = parser.parse_args()
+    return opts
 
 
 def image_to_label(gt_img):
@@ -112,12 +124,13 @@ def eval_seg(GT_DATA, CRF_SEG_DATA, RAW_SEG_DATA, OUT_DIR):
                 
 
             # visualize labelings
-            tiled_img = np.concatenate((label_to_image(gt_label), \
-                                        label_to_image(raw_res_label), \
-                                        label_to_image(crf_res_label)), axis=1)
-            if not os.path.isdir(join(OUT_DIR, d)):
-                os.makedirs(join(OUT_DIR, d))
-            imsave(join(OUT_DIR, d, frame_num.zfill(5)+'_gt_raw_crf.png'), tiled_img)
+            if opts.viz:
+                tiled_img = np.concatenate((label_to_image(gt_label), \
+                                            label_to_image(raw_res_label), \
+                                            label_to_image(crf_res_label)), axis=1)
+                if not os.path.isdir(join(OUT_DIR, d)):
+                    os.makedirs(join(OUT_DIR, d))
+                imsave(join(OUT_DIR, d, frame_num.zfill(5)+'_gt_raw_crf.png'), tiled_img)
 
 
             # simplified performance metric -- foreground IOU
@@ -165,6 +178,5 @@ def eval_seg(GT_DATA, CRF_SEG_DATA, RAW_SEG_DATA, OUT_DIR):
 
 # entry point
 if __name__ == '__main__':
-
-    # opts = parse_input_opts()
-    eval_seg(GT_DATA, CRF_SEG_DATA, RAW_SEG_DATA, OUT_DIR)
+    opts = parse_input_opts()
+    eval_seg(opts.gt_data, opts.crf_data, opts.raw_data, opts.out_dir)

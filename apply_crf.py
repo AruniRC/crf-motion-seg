@@ -12,11 +12,8 @@
     - This code skips over frames if it finds that it has already been saved on disk.
     - To re-start this code from scratch, you need to completely remove the CRF output folder. 
 '''
-IMAGE_DATA = '/data2/arunirc/Research/FlowNet2/flownet2-docker/data/complexBackground/complexBackground-multilabel/'
-SEG_DATA = '/data/pbideau/motionSegmentation/Aruni_CRF/complex-background-multi-labels/'
-IMAGE_EXT = ['.jpg', '.png']
-OUT_DIR = 'data/crf-output/complex-bg'
 
+from __future__ import division
 
 import pydensecrf.densecrf as dcrf
 from pydensecrf.utils import unary_from_labels, create_pairwise_bilateral, create_pairwise_gaussian, unary_from_softmax
@@ -35,6 +32,12 @@ import argparse
 import traceback
 import warnings
 import sys
+
+
+IMAGE_DATA = '/data2/arunirc/Research/FlowNet2/flownet2-docker/data/complexBackground/complexBackground-multilabel/'
+SEG_DATA = '/data/pbideau/motionSegmentation/Aruni_CRF/complex-background-multi-labels/'
+IMAGE_EXT = ['.jpg', '.png']
+OUT_DIR = 'data/crf-output/complex-bg'
 
 
 def parse_input_opts():
@@ -65,12 +68,12 @@ def parse_input_opts():
     opts = parser.parse_args()
     opts.image_exts = IMAGE_EXT
     
-    opts.crf_gaussian_weight = int(opts.crf_gaussian_weight)
-    opts.crf_gaussian_weight = int(opts.crf_gaussian_weight)
+    opts.crf_gaussian_weight = float(opts.crf_gaussian_weight)
+    opts.gaussian_sx = float(opts.gaussian_sx)
 
-    opts.crf_bilateral_weight = int(opts.crf_bilateral_weight)
-    opts.bilateral_sx = int(opts.bilateral_sx)
-    opts.bilateral_color = int(opts.bilateral_color)
+    opts.crf_bilateral_weight = float(opts.crf_bilateral_weight)
+    opts.bilateral_sx = float(opts.bilateral_sx)
+    opts.bilateral_color = float(opts.bilateral_color)
     return opts
 
 
@@ -116,16 +119,22 @@ def get_crf_seg(img, labels, n_labels, opts):
     crf = dcrf.DenseCRF(img.shape[1] * img.shape[0], n_labels)
     U = unary_from_softmax(labels)
     crf.setUnaryEnergy(U)
+
+    # pairwise positional (gaussian) terms
     feats = create_pairwise_gaussian(sdims=(opts.gaussian_sx, opts.gaussian_sx), shape=img.shape[:2])
     crf.addPairwiseEnergy(feats, compat=opts.crf_gaussian_weight,
                     kernel=dcrf.DIAG_KERNEL,
                     normalization=dcrf.NORMALIZE_SYMMETRIC)
+
+    # pairwise bilateral (color + position) terms
     feats = create_pairwise_bilateral(sdims=(opts.bilateral_sx, opts.bilateral_sx), \
                                       schan=(opts.bilateral_color, opts.bilateral_color, opts.bilateral_color),
                                       img=img, chdim=2)
     crf.addPairwiseEnergy(feats, compat=opts.crf_bilateral_weight,
                     kernel=dcrf.DIAG_KERNEL,
                     normalization=dcrf.NORMALIZE_SYMMETRIC)
+
+    # run inference
     Q = crf.inference(5)
 
     return Q
@@ -279,9 +288,11 @@ def apply_crf_seg(opts):
                     crf_label_img = label_map[crf_map_img] # CRF labels --> instance labels
                     
                     # side-by-side visualizations as RGB overlays
-                    crf_rgb = color.label2rgb(crf_label_img, img)
+                    crf_rgb = color.label2rgb(crf_label_img, img, bg_label=0)
+
                     res_label =  np.argmax(res, axis=2)
-                    res_rgb = color.label2rgb(res_label, img)
+                    res_rgb = color.label2rgb(res_label, img, bg_label=0)
+
                     tiled_img = np.concatenate((res_rgb, \
                                     np.zeros([res_rgb.shape[0],10,3]), \
                                     crf_rgb), axis=1)
