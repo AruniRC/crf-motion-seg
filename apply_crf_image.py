@@ -8,6 +8,10 @@
     - Usage:
         python apply_crf_image.py -i INPUT_IMAGE_FILE -s INPUT_SEG_MAT_FILE -o OUTPUT_MAT_FILE
 
+    - Optimal CRF flags cross-validated on FBMS Training set:
+        (append these to the usual call to the script shown above)
+        '... -cbw 15 -cbx 40 -cbc 5'
+
     - Requirements:
         * install Anaconda
         * Create a conda environment:
