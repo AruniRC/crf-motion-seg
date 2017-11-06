@@ -217,10 +217,10 @@ def apply_crf_seg(opts):
                     continue
 
                 # if no corresponding ground truth image -- skip
-                f_num = int(frame_num)
-                gt_file = join(opts.image_data, d, 'GroundTruth', str(f_num).zfill(3)+'_gt.png')
-                if not isfile(gt_file):
-                    continue
+                # f_num = int(frame_num)
+                # gt_file = join(opts.image_data, d, 'GroundTruth', str(f_num).zfill(3)+'_gt.png')
+                # if not isfile(gt_file):
+                #     continue
                 
 
 
