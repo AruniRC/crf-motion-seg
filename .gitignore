@@ -4,3 +4,4 @@ data/
 mpnet/
 pydensecrf/
 samples/*
+samples/*/*
