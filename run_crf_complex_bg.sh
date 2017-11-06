@@ -4,5 +4,11 @@
 
 IMAGE_DATA='/data2/arunirc/Research/FlowNet2/flownet2-docker/data/complexBackground/complexBackground-multilabel/'
 SEG_DATA='data/our/complex-background-multi-labels/'
-OUT_DIR='data/crf-output/complex-bg'
-./apply_crf.py -i $IMAGE_DATA -s $SEG_DATA -o $OUT_DIR -d 'complex' -v
+OUT_DIR='data/crf-output-v2/complex-bg'
+
+# crf params
+W=15
+X=40
+R=5
+
+./apply_crf.py -i $IMAGE_DATA -s $SEG_DATA -o $OUT_DIR -d 'complex' -v -cbw $W -cbx $X -cbc $R
