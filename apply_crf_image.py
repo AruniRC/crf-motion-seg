@@ -74,8 +74,14 @@ def parse_input_opts():
                             default=10)
     parser.add_argument('-mi', '--max_iter', help='Max iters for CRF', \
                             default=5)
-
+    
     opts = parser.parse_args()
+    opts.crf_gaussian_weight = float(opts.crf_gaussian_weight)
+    opts.gaussian_sx = float(opts.gaussian_sx)
+    opts.crf_bilateral_weight = float(opts.crf_bilateral_weight)
+    opts.bilateral_sx = float(opts.bilateral_sx)
+    opts.bilateral_color = float(opts.bilateral_color)
+    
     return opts
 
 
