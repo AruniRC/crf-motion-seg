@@ -1,0 +1,6 @@
+*.pyc
+data/
+.ipynb_*
+mpnet/
+pydensecrf/
+samples/*
