@@ -63,25 +63,25 @@ def parse_input_opts():
                             default=False, action='store_true')
 
     parser.add_argument('-cgw', '--crf_gaussian_weight', help='CRF weight for pairwise Gaussian term', \
-                            default=3)
+                            default=3, type=float)
     parser.add_argument('-cgx', '--gaussian_sx', help='x_stdev for pairwise Gaussian term', \
-                            default=3)
+                            default=3, type=float)
     parser.add_argument('-cbw', '--crf_bilateral_weight', help='CRF weight for pairwise bilateral term', \
-                            default=5)
+                            default=5, type=float)
     parser.add_argument('-cbx', '--bilateral_sx', help='x_stdev for pairwise bilateral term', \
-                            default=50)
+                            default=50, type=float)
     parser.add_argument('-cbc', '--bilateral_color', help='color stdev for pairwise bilateral term', \
-                            default=10)
+                            default=10, type=float)
     parser.add_argument('-mi', '--max_iter', help='Max iters for CRF', \
-                            default=5)
-    
+                            default=5, type=int)
+
     opts = parser.parse_args()
-    opts.crf_gaussian_weight = float(opts.crf_gaussian_weight)
-    opts.gaussian_sx = float(opts.gaussian_sx)
-    opts.crf_bilateral_weight = float(opts.crf_bilateral_weight)
-    opts.bilateral_sx = float(opts.bilateral_sx)
-    opts.bilateral_color = float(opts.bilateral_color)
-    
+    # opts.crf_gaussian_weight = float(opts.crf_gaussian_weight)
+    # opts.gaussian_sx = float(opts.gaussian_sx)
+    # opts.crf_bilateral_weight = float(opts.crf_bilateral_weight)
+    # opts.bilateral_sx = float(opts.bilateral_sx)
+    # opts.bilateral_color = float(opts.bilateral_color)
+
     return opts
 
 
