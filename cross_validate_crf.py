@@ -28,9 +28,9 @@ import shutil
 # Uncomment Run1 or Run 2 ... for different resolutions of the grid-search
 
 IMAGE_DATA = '/data/arunirc/Research/dense-crf-data/training_subset/'
-SEG_DATA = '/data2/arunirc/Research/dense-crf/data/our/FBMS/Trainingset/'
-OUT_DIR = '/data2/arunirc/Research/dense-crf/data/cross-val-crf/'
-MODE = 'pick'   # 'run' or 'eval' or 'pick'
+SEG_DATA = '/data/arunirc/Research/dense-crf-data/our-modifiedObjPrior/FBMS/Trainingset'
+OUT_DIR = '/data/arunirc/Research/dense-crf-data/cross-val-crf-modifiedObjPrior/'
+MODE = 'run'   # 'run' or 'eval' or 'pick'
 METRIC = 'pr'  # 'iou' or 'pr'
 
 
@@ -42,8 +42,8 @@ METRIC = 'pr'  # 'iou' or 'pr'
 # range_XY_STD=[40, 50, 60, 70, 80, 90, 100]
 # range_RGB_STD=[3, 5, 7, 9, 10]
 
-# Run 2
-# bilateral (colorspace)
+# # Run 2
+# # bilateral (colorspace)
 RUN_NUM = 2
 range_W = [10, 15, 20]
 range_XY_STD = [10, 20, 30, 40]
@@ -97,7 +97,7 @@ def grid_runner():
                         + '-cbw ' + str(w) + ' ' \
                         + '-cbx ' + str(x) + ' ' \
                         + '-cbc ' + str(r) + ' ' \
-                        + '-mi ' + str(MAX_ITER) + ' &'
+                        + '-mi ' + str(MAX_ITER) + ' -z &'
                 print cmd
                 subprocess.call(cmd, shell=True)
     print 'done'
@@ -106,7 +106,8 @@ def grid_runner():
 
 def grid_evaluater():
     '''
-        
+       Calculate an evaluation metric over all pre-computed segmentation results
+       (run after `grid_runner` ) 
     '''
 
     print 'Running evaluations'
@@ -140,6 +141,10 @@ def grid_evaluater():
 
 
 def grid_picker():
+    '''
+        Pick the best settings from grid search evaluation results
+        (run after `grid_evaluater`)
+    '''
 
     print 'Pick best settings'
 

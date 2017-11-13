@@ -52,6 +52,9 @@ def parse_input_opts():
                             default='davis')
     parser.add_argument('-v', '--viz', help='Save visualized original and CRF segmentations as images', \
                             default=False, action='store_true')
+
+    parser.add_argument('-z', '--slim', help='Compute results only for frames that have a ground-truth annotation', \
+                            default=False, action='store_true')
     
     parser.add_argument('-cgw', '--crf_gaussian_weight', help='CRF weight for pairwise Gaussian term', \
                             default=3, type=float)
@@ -218,10 +221,11 @@ def apply_crf_seg(opts):
                     continue
 
                 # if no corresponding ground truth image -- skip
-                # f_num = int(frame_num)
-                # gt_file = join(opts.image_data, d, 'GroundTruth', str(f_num).zfill(3)+'_gt.png')
-                # if not isfile(gt_file):
-                #     continue
+                if opts.slim:
+                    f_num = int(frame_num)
+                    gt_file = join(opts.image_data, d, 'GroundTruth', str(f_num).zfill(3)+'_gt.png')
+                    if not isfile(gt_file):
+                        continue
                 
 
 
