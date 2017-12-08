@@ -27,7 +27,7 @@ The `apply_crf_image.py` can be called from within a MATLAB script or from the t
 
 The main purpose of `apply_crf_image.py`  is to be able to call it from within a MATLAB loop -- with some file I/O overheads. The MATLAB instance needs to be run inside a conda environment. It can be a bit tricky to set this up on a SLURM cluster.
 
-To setup on **swarm2**:
+To setup on **swarm2** (compute cluster using SLURM):
 
 1) install _miniconda_ (from your home directory on swarm2):
 
@@ -49,11 +49,11 @@ The last bit takes a long time ... without any output messages!
 
 3) then check if this works on a single input:
 
-    wget https://github.com/AruniRC/crf-motion-seg/archive/master.zip
-    unzip master.zip
-    cd crf-motion-seg-master/
+    `wget https://github.com/AruniRC/crf-motion-seg/archive/master.zip`
+    `unzip master.zip`
+    `cd crf-motion-seg-master/`
 
-    srun python apply_crf_image.py -i ./samples/bear01/bear01_0002.jpg -s ./samples/bear01/00002.mat -o ./samples/test_seg_2.mat -v
+    `srun python apply_crf_image.py -i ./samples/bear01/bear01_0002.jpg -s ./samples/bear01/00002.mat -o ./samples/test_seg_2.mat -v`
 
 You should see `./samples/viz_raw_crf_bear01_0002.jpg` -- the segmentation visualization image.
 
