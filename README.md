@@ -50,7 +50,9 @@ The last bit takes a long time ... without any output messages!
 3) then check if this works on a single input:
 
     `wget https://github.com/AruniRC/crf-motion-seg/archive/master.zip`
+    
     `unzip master.zip`
+    
     `cd crf-motion-seg-master/`
 
     `srun python apply_crf_image.py -i ./samples/bear01/bear01_0002.jpg -s ./samples/bear01/00002.mat -o ./samples/test_seg_2.mat -v`
