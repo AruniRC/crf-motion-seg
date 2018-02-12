@@ -16,10 +16,8 @@ Inside the env:
 ### Apply CRF
 
 
+![](samples/forest/viz_raw_crf_forest_00001.png)
 
-![crf-sample]( crf-motion-seg/samples/forest/viz_raw_crf_forest_00001.png)
-
-Sample output: Raw motion seg | CRF refinement 
 
 The `apply_crf.py` file contains the Python code to apply dense CRF 
 on motion segmentation datasets.
