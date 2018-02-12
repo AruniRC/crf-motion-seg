@@ -23,6 +23,11 @@ The settings and paths should be modified inside these scripts before calling.
 
 The `apply_crf_image.py` can be called from within a MATLAB script or from the terminal to do CRF segmentation for a single frame. It takes in one image file, one MAT file of raw segmentations and outputs the CRF segmentations in a MAT file at a specified location.
 
+
+![crf-sample](https://www.dropbox.com/s/irmda5z5dgql6jq/crf-moseg.png)
+
+
+
 ### Setup with MATLAB calls on swarm2 cluster 
 
 The main purpose of `apply_crf_image.py`  is to be able to call it from within a MATLAB loop -- with some file I/O overheads. The MATLAB instance needs to be run inside a conda environment. It can be a bit tricky to set this up on a SLURM cluster.
