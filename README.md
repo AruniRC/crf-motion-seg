@@ -15,6 +15,12 @@ Inside the env:
 
 ### Apply CRF
 
+
+
+![crf-sample]( crf-motion-seg/samples/forest/viz_raw_crf_forest_00001.png)
+
+Sample output: Raw motion seg | CRF refinement 
+
 The `apply_crf.py` file contains the Python code to apply dense CRF 
 on motion segmentation datasets.
 
@@ -22,9 +28,6 @@ The `run_*.sh` shell scripts run the CRF segmentation on various datasets.
 The settings and paths should be modified inside these scripts before calling. 
 
 The `apply_crf_image.py` can be called from within a MATLAB script or from the terminal to do CRF segmentation for a single frame. It takes in one image file, one MAT file of raw segmentations and outputs the CRF segmentations in a MAT file at a specified location.
-
-
-![crf-sample](https://www.dropbox.com/s/irmda5z5dgql6jq/crf-moseg.png)
 
 
 
