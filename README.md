@@ -42,16 +42,19 @@ To setup on **swarm2** (compute cluster using SLURM):
 
 2) setup the conda environment:
 
+```bash
     conda create --prefix ~/dense-crf-conda python=2.7
     source activate /home/arunirc/dense-crf-conda
     pip install pydensecrf
+```
 
 The last bit takes a long time ... without any output messages!
 
+```bash
     conda install numpy
     conda install scipy
     conda install scikit-image
-
+```
 
 3) then check if this works on a single input:
 
